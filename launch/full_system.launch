@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- 
+    Complete system launch for Livox Mid360 SLAM with FAST-LIO2
+    This launch file starts:
+    1. Livox Mid360 driver (livox_ros_driver2)
+    2. FAST-LIO2 mapping node
+    3. RVIZ visualization (optional)
+  -->
+
+  <!-- Arguments -->
+  <arg name="rviz" default="true" doc="Launch RVIZ visualization"/>
+  <arg name="publish_freq" default="10.0" doc="Livox publish frequency (Hz)"/>
+  
+  <!-- ========================================== -->
+  <!-- Livox Mid360 Driver -->
+  <!-- ========================================== -->
+  <include file="$(find livox_ros_driver2)/launch/msg_MID360.launch">
+    <arg name="publish_freq" value="$(arg publish_freq)"/>
+    <arg name="rviz_enable" value="false"/>  <!-- We'll use our own RVIZ config -->
+    <arg name="rosbag_enable" value="false"/>
+  </include>
+
+  <!-- ========================================== -->
+  <!-- FAST-LIO2 Mapping -->
+  <!-- ========================================== -->
+  <!-- Load FAST-LIO2 parameters -->
+  <rosparam command="load" file="$(find fast_lio)/config/mid360.yaml" />
+
+  <!-- FAST-LIO2 Parameters -->
+  <param name="feature_extract_enable" type="bool" value="0"/>
+  <param name="point_filter_num" type="int" value="3"/>
+  <param name="max_iteration" type="int" value="3"/>
+  <param name="filter_size_surf" type="double" value="0.5"/>
+  <param name="filter_size_map" type="double" value="0.5"/>
+  <param name="cube_side_length" type="double" value="200"/>  <!-- Local map size in meters -->
+  <param name="runtime_pos_log_enable" type="bool" value="0"/>
+
+  <!-- Launch FAST-LIO2 mapping node -->
+  <node pkg="fast_lio" type="fastlio_mapping" name="laserMapping" output="screen" />
+
+  <!-- ========================================== -->
+  <!-- RVIZ Visualization -->
+  <!-- ========================================== -->
+  <group if="$(arg rviz)">
+    <node launch-prefix="nice" pkg="rviz" type="rviz" name="rviz" 
+          args="-d $(find fast_lio)/rviz_cfg/loam_livox.rviz" />
+  </group>
+
+</launch>
